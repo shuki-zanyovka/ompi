@@ -80,6 +80,7 @@ _winfo_reset(opal_common_ucx_winfo_t *winfo)
 {
     if (winfo->inflight_req != UCS_OK) {
         opal_common_ucx_wait_request_mt(winfo->inflight_req,
+                                        OPAL_COMMON_UCX_REQUEST_TYPE_UCP,
                                         "opal_common_ucx_flush");
         winfo->inflight_req = UCS_OK;
     }
@@ -1164,7 +1165,9 @@ opal_common_ucx_winfo_flush(opal_common_ucx_winfo_t *winfo, int target,
     }
 
     if(OPAL_COMMON_UCX_FLUSH_B) {
-        rc = opal_common_ucx_wait_request_mt(req, "ucp_ep_flush_nb");
+        rc = opal_common_ucx_wait_request_mt(req,
+                                             OPAL_COMMON_UCX_REQUEST_TYPE_UCP,
+                                             "ucp_ep_flush_nb");
     } else {
         *req_ptr = req;
     }
