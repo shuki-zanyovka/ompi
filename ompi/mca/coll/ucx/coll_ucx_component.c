@@ -1,7 +1,8 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2011 Mellanox Technologies. All rights reserved.
- * Copyright (c) 2015 Los Alamos National Security, LLC. All rights reserved.
+ * Copyright (c) 2011      Mellanox Technologies. All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights reserved.
+ * Copyright (c) 2019      Huawei Technologies Co., Ltd. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -122,10 +123,6 @@ static int ucx_register(void)
 
 static int ucx_open(void)
 {
-    mca_coll_ucx_component.output = opal_output_open(NULL);
-    opal_output_set_verbosity(mca_coll_ucx_component.output,
-          mca_coll_ucx_component.verbose);
-
     opal_common_ucx_mca_register();
 
     return mca_coll_ucx_open();
@@ -167,7 +164,7 @@ static int mca_coll_ucx_send_worker_address_type(int addr_flags, int modex_scope
     }
 
     COLL_UCX_VERBOSE(2, "Pack %s worker address, size %ld",
-                     (modex_scope == PMIX_LOCAL) ? "local" : "remote",
+                     (modex_scope == OPAL_PMIX_LOCAL) ? "local" : "remote",
                      attrs.address_length);
 
     return OMPI_SUCCESS;
@@ -191,7 +188,7 @@ static int mca_coll_ucx_send_worker_address(void)
 
     COLL_UCX_VERBOSE(2, "Pack worker address, size %ld", addrlen);
 
-    OPAL_MODEX_SEND(rc, PMIX_GLOBAL,
+    OPAL_MODEX_SEND(rc, OPAL_PMIX_GLOBAL,
                     &mca_coll_ucx_component.super.collm_version, (void*)address, addrlen);
 
     ucp_worker_release_address(ompi_coll_ucx.ucp_worker, address);
@@ -202,12 +199,12 @@ static int mca_coll_ucx_send_worker_address(void)
 #else
     /* Pack just network device addresses for remote node peers */
     status = mca_coll_ucx_send_worker_address_type(UCP_WORKER_ADDRESS_FLAG_NET_ONLY,
-                                                   PMIX_REMOTE);
+                                                   OPAL_PMIX_REMOTE);
     if (UCS_OK != status) {
         goto err;
     }
 
-    status = mca_coll_ucx_send_worker_address_type(0, PMIX_LOCAL);
+    status = mca_coll_ucx_send_worker_address_type(0, OPAL_PMIX_LOCAL);
     if (UCS_OK != status) {
         goto err;
     }

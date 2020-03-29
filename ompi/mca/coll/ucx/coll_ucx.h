@@ -2,6 +2,7 @@
   Copyright (c) 2011      Mellanox Technologies. All rights reserved.
   Copyright (c) 2015      Research Organization for Information Science
                           and Technology (RIST). All rights reserved.
+  Copyright (c) 2019      Huawei Technologies Co., Ltd. All rights reserved.
   $COPYRIGHT$
 
   Additional copyrights may follow
@@ -21,7 +22,6 @@
 #include "ompi/communicator/communicator.h"
 #include "ompi/request/request.h"
 #include "opal/mca/common/ucx/common_ucx.h"
-#include "ompi/op/op.h"
 
 #include <ucg/api/ucg_mpi.h>
 #include <ucs/datastruct/list.h>

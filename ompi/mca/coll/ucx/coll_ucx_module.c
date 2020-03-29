@@ -2,6 +2,7 @@
  * Copyright (c) 2011      Mellanox Technologies. All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2019      Huawei Technologies Co., Ltd. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -9,14 +10,11 @@
  * $HEADER$
  */
 
-#include "ompi_config.h"
-#include "ompi/constants.h"
-#include "ompi/datatype/ompi_datatype.h"
-#include "ompi/mca/coll/base/coll_base_functions.h"
-#include "ompi/op/op.h"
-
 #include "coll_ucx.h"
 #include "coll_ucx_request.h"
+
+#include "ompi/mca/coll/base/coll_base_functions.h"
+#include "ompi/op/op.h"
 
 static int mca_coll_ucg_create(mca_coll_ucx_module_t *module,
                                struct ompi_communicator_t *comm)
@@ -36,7 +34,7 @@ static int mca_coll_ucg_create(mca_coll_ucx_module_t *module,
     args.member_index      = ompi_comm_rank(comm);
     args.member_count      = ompi_comm_size(comm);
     /* args.mpi_copy_f     = ompi_datatype_copy_content_same_ddt; */
-    args.mpi_reduce_f      = ompi_op_reduce;
+    args.mpi_reduce_f      = (void (*)(void *mpi_op, char *src, char *dst, unsigned count, void *mpi_dtype))ompi_op_reduce;
     args.resolve_address_f = mca_coll_ucx_resolve_address;
     args.release_address_f = mca_coll_ucx_release_address;
     args.cb_group_obj      = comm;
@@ -130,7 +128,7 @@ static int mca_coll_ucx_ft_event(int state) {
 static void mca_coll_ucx_module_construct(mca_coll_ucx_module_t *module)
 {
     size_t nonzero = sizeof(module->super.super);
-    memset((void*)module + nonzero, 0, sizeof(*module) - nonzero);
+    memset((char*)module + nonzero, 0, sizeof(*module) - nonzero);
 
     module->super.coll_module_enable  = mca_coll_ucx_module_enable;
     module->super.ft_event            = mca_coll_ucx_ft_event;
