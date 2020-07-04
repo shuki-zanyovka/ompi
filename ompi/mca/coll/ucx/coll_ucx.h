@@ -2,6 +2,7 @@
   Copyright (c) 2011      Mellanox Technologies. All rights reserved.
   Copyright (c) 2015      Research Organization for Information Science
                           and Technology (RIST). All rights reserved.
+  Copyright (c) 2019      Huawei Technologies Co., Ltd. All rights reserved.
   $COPYRIGHT$
 
   Additional copyrights may follow
@@ -121,6 +122,7 @@ int mca_coll_ucx_iallreduce(const void *sbuf, void *rbuf, int count,
                             struct ompi_request_t **request,
                             mca_coll_base_module_t *module);
 
+/*
 int mca_coll_ucx_allreduce_init(const void *sbuf, void *rbuf, int count,
                                 struct ompi_datatype_t *dtype,
                                 struct ompi_op_t *op,
@@ -128,6 +130,7 @@ int mca_coll_ucx_allreduce_init(const void *sbuf, void *rbuf, int count,
                                 struct ompi_info_t *info,
                                 struct ompi_request_t **request,
                                 mca_coll_base_module_t *module);
+*/
 
 int mca_coll_ucx_bcast(void *buff, int count, struct ompi_datatype_t *datatype,
                        int root, struct ompi_communicator_t *comm,
@@ -143,10 +146,20 @@ int mca_coll_ucx_scatter(const void *sbuf, int scount, struct ompi_datatype_t *s
                          int root, struct ompi_communicator_t *comm,
                          mca_coll_base_module_t *module);
 
+int mca_coll_ucx_scatterv(const void *sbuf, const int *scounts, const int *sdispls, struct ompi_datatype_t *sdtype,
+                                void *rbuf,       int  rcount,                      struct ompi_datatype_t *rdtype,
+                          int root, struct ompi_communicator_t *comm,
+                          mca_coll_base_module_t *module);
+
 int mca_coll_ucx_gather(const void *sbuf, int scount, struct ompi_datatype_t *sdtype,
                               void *rbuf, int rcount, struct ompi_datatype_t *rdtype,
                         int root, struct ompi_communicator_t *comm,
                         mca_coll_base_module_t *module);
+
+int mca_coll_ucx_gatherv(const void *sbuf,       int  scount,                      struct ompi_datatype_t *sdtype,
+                               void *rbuf, const int *rcounts, const int *rdispls, struct ompi_datatype_t *rdtype,
+                         int root, struct ompi_communicator_t *comm,
+                         mca_coll_base_module_t *module);
 
 int mca_coll_ucx_allgather(const void *sbuf, int scount, struct ompi_datatype_t *sdtype,
                                  void *rbuf, int rcount, struct ompi_datatype_t *rdtype,

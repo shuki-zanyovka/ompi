@@ -2,6 +2,7 @@
  * Copyright (c) 2011      Mellanox Technologies. All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2019      Huawei Technologies Co., Ltd. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -18,6 +19,28 @@
 #include "coll_ucx.h"
 #include "coll_ucx_request.h"
 
+static int mca_coll_ucg_is_dtype_int(ompi_datatype_t *dtype)
+{
+    /* TODO: what about signed/unsigned? */
+    return (dtype->super.flags & OMPI_DATATYPE_FLAG_DATA_INT);
+}
+
+static int mca_coll_ucg_is_dtype_fp(ompi_datatype_t *dtype)
+{
+    return (dtype->super.flags & OMPI_DATATYPE_FLAG_DATA_FLOAT);
+}
+
+static int mca_coll_ucg_is_op_sum(ompi_op_t *op)
+{
+    return (op == &ompi_mpi_op_sum.op);
+}
+
+static int mca_coll_ucg_is_op_loc(ompi_op_t *op)
+{
+    return ((op == &ompi_mpi_op_minloc.op) ||
+            (op == &ompi_mpi_op_maxloc.op));
+}
+
 static int mca_coll_ucg_create(mca_coll_ucx_module_t *module,
                                struct ompi_communicator_t *comm)
 {
@@ -32,13 +55,25 @@ static int mca_coll_ucg_create(mca_coll_ucx_module_t *module,
                              UCG_GROUP_PARAM_FIELD_MEMBER_INDEX |
                              UCG_GROUP_PARAM_FIELD_DISTANCES    |
                              UCG_GROUP_PARAM_FIELD_REDUCE_CB    |
-                             UCG_GROUP_PARAM_FIELD_RESOLVER_CB;
-    args.member_index      = ompi_comm_rank(comm);
+                             UCG_GROUP_PARAM_FIELD_RESOLVER_CB  |
+                             //UCG_GROUP_PARAM_FIELD_PACKING_CB |
+                             UCG_GROUP_PARAM_FIELD_IS_INT_CB    |
+                             UCG_GROUP_PARAM_FIELD_IS_FP_CB     |
+                             UCG_GROUP_PARAM_FIELD_IS_SUM_CB    |
+                             UCG_GROUP_PARAM_FIELD_IS_LOC_CB;
     args.member_count      = ompi_comm_size(comm);
-    /* args.mpi_copy_f     = ompi_datatype_copy_content_same_ddt; */
-    args.mpi_reduce_f      = ompi_op_reduce;
+    args.member_index      = ompi_comm_rank(comm);
+    args.mpi_reduce_f      = (typeof(args.mpi_reduce_f))ompi_op_reduce;
     args.resolve_address_f = mca_coll_ucx_resolve_address;
     args.release_address_f = mca_coll_ucx_release_address;
+    /* TODO:
+      args.mpi_pack_f      = ompi_datatype_pack;
+      args.mpi_unpack_f    = ompi_datatype_unpack;
+    */
+    args.mpi_is_int_f      = (typeof(args.mpi_is_int_f))mca_coll_ucg_is_dtype_int;
+    args.mpi_is_fp_f       = (typeof(args.mpi_is_fp_f))mca_coll_ucg_is_dtype_fp;
+    args.mpi_is_sum_f      = (typeof(args.mpi_is_sum_f))mca_coll_ucg_is_op_sum;
+    args.mpi_is_loc_f      = (typeof(args.mpi_is_loc_f))mca_coll_ucg_is_op_loc;
     args.cb_group_obj      = comm;
     args.distance          = alloca(args.member_count * sizeof(*args.distance));
     if (args.distance == NULL) {
@@ -129,19 +164,21 @@ static int mca_coll_ucx_ft_event(int state) {
 
 static void mca_coll_ucx_module_construct(mca_coll_ucx_module_t *module)
 {
-    size_t nonzero = sizeof(module->super.super);
-    memset((void*)module + nonzero, 0, sizeof(*module) - nonzero);
+    memset(&module->super.super + 1, 0,
+           sizeof(*module) - sizeof(module->super.super));
 
     module->super.coll_module_enable  = mca_coll_ucx_module_enable;
     module->super.ft_event            = mca_coll_ucx_ft_event;
     module->super.coll_allreduce      = mca_coll_ucx_allreduce;
-    //module->super.coll_iallreduce     = mca_coll_ucx_iallreduce;
-    //module->super.coll_allreduce_init = mca_coll_ucx_allreduce_init;
+    module->super.coll_iallreduce     = mca_coll_ucx_iallreduce;
+/*    module->super.coll_allreduce_init = mca_coll_ucx_allreduce_init; */
     module->super.coll_barrier        = mca_coll_ucx_barrier;
     module->super.coll_bcast          = mca_coll_ucx_bcast;
     module->super.coll_reduce         = mca_coll_ucx_reduce;
     module->super.coll_scatter        = mca_coll_ucx_scatter;
-    //module->super.coll_gather         = mca_coll_ucx_gather;
+    module->super.coll_scatterv       = mca_coll_ucx_scatterv;
+    module->super.coll_gather         = mca_coll_ucx_gather;
+    module->super.coll_gatherv        = mca_coll_ucx_gatherv;
     //module->super.coll_allgather      = mca_coll_ucx_allgather;
     module->super.coll_alltoall       = mca_coll_ucx_alltoall;
 }

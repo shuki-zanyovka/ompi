@@ -2,6 +2,7 @@
 /*
  * Copyright (c) 2011 Mellanox Technologies. All rights reserved.
  * Copyright (c) 2015 Los Alamos National Security, LLC. All rights reserved.
+ * Copyright (c) 2019 Huawei Technologies Co., Ltd. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
