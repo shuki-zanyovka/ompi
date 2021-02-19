@@ -38,7 +38,7 @@ static int mca_coll_ucg_create(mca_coll_ucx_module_t *module,
     args.distance                 = alloca(args.member_count *
                                            sizeof(*args.distance));
     if (args.distance == NULL) {
-        COLL_UCX_ERROR("Failed to allocate memory for %lu local ranks", args.member_count);
+        COLL_UCX_ERROR("Failed to allocate memory for %u local ranks", args.member_count);
         return OMPI_ERROR;
     }
 
@@ -48,13 +48,31 @@ static int mca_coll_ucg_create(mca_coll_ucx_module_t *module,
         struct ompi_proc_t *rank_iter =
                 (struct ompi_proc_t*)ompi_comm_peer_lookup(comm, rank_idx);
         if (rank_idx == args.member_index) {
-            args.distance[rank_idx] = UCG_GROUP_MEMBER_DISTANCE_SELF;
+            args.distance[rank_idx] = UCG_GROUP_MEMBER_DISTANCE_NONE;
+        } else if (OPAL_PROC_ON_LOCAL_HWTHREAD(rank_iter->super.proc_flags)) {
+            args.distance[rank_idx] = UCG_GROUP_MEMBER_DISTANCE_HWTHREAD;
+        } else if (OPAL_PROC_ON_LOCAL_CORE(rank_iter->super.proc_flags)) {
+            args.distance[rank_idx] = UCG_GROUP_MEMBER_DISTANCE_CORE;
+        } else if (OPAL_PROC_ON_LOCAL_L1CACHE(rank_iter->super.proc_flags)) {
+            args.distance[rank_idx] = UCG_GROUP_MEMBER_DISTANCE_L1CACHE;
+        } else if (OPAL_PROC_ON_LOCAL_L2CACHE(rank_iter->super.proc_flags)) {
+            args.distance[rank_idx] = UCG_GROUP_MEMBER_DISTANCE_L2CACHE;
+        } else if (OPAL_PROC_ON_LOCAL_L3CACHE(rank_iter->super.proc_flags)) {
+            args.distance[rank_idx] = UCG_GROUP_MEMBER_DISTANCE_L3CACHE;
         } else if (OPAL_PROC_ON_LOCAL_SOCKET(rank_iter->super.proc_flags)) {
             args.distance[rank_idx] = UCG_GROUP_MEMBER_DISTANCE_SOCKET;
+        } else if (OPAL_PROC_ON_LOCAL_NUMA(rank_iter->super.proc_flags)) {
+            args.distance[rank_idx] = UCG_GROUP_MEMBER_DISTANCE_NUMA;
+        } else if (OPAL_PROC_ON_LOCAL_BOARD(rank_iter->super.proc_flags)) {
+            args.distance[rank_idx] = UCG_GROUP_MEMBER_DISTANCE_BOARD;
         } else if (OPAL_PROC_ON_LOCAL_HOST(rank_iter->super.proc_flags)) {
             args.distance[rank_idx] = UCG_GROUP_MEMBER_DISTANCE_HOST;
+        } else if (OPAL_PROC_ON_LOCAL_CU(rank_iter->super.proc_flags)) {
+            args.distance[rank_idx] = UCG_GROUP_MEMBER_DISTANCE_CU;
+        } else if (OPAL_PROC_ON_LOCAL_CLUSTER(rank_iter->super.proc_flags)) {
+            args.distance[rank_idx] = UCG_GROUP_MEMBER_DISTANCE_CLUSTER;
         } else {
-            args.distance[rank_idx] = UCG_GROUP_MEMBER_DISTANCE_NET;
+            args.distance[rank_idx] = UCG_GROUP_MEMBER_DISTANCE_UNKNOWN;
         }
     }
 
